@@ -17,14 +17,36 @@ class SampleJobConfiguration (
 ) {
     @Bean
     fun job(): Job {
-        return JobBuilder("job", jobRepository)
+        return JobBuilder("simpleJob1", jobRepository)
             .start(step())
             .build()
     }
     @Bean
     fun step(): Step {
-        return StepBuilder("step", jobRepository)
+        return StepBuilder("simpleStep1", jobRepository)
             .tasklet(tasklet, transactionManager)
+            .build()
+    }
+
+    @Bean
+    fun job2(): Job {
+        return JobBuilder("simpleJob2", jobRepository)
+            .start(step2())
+            .build()
+    }
+    var count: Int = 0
+    @Bean
+    fun step2(): Step {
+        return StepBuilder("simpleStep2", jobRepository)
+            .chunk<String, String>(1, transactionManager)
+            .reader {  ->
+                if (count < 10) {
+                    count++
+                    return@reader count.toString()
+                }
+                return@reader null
+            }
+            .writer { items -> items.forEach { item -> println(item) } }
             .build()
     }
 }
